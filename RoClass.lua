@@ -70,15 +70,19 @@ function classBehavior.new(overrideSelf)
 		end
 	end
 	
+	if not self.className then
+		self.className = ""
+	end
+	
 	setmetatable(self, classBehavior)
 	
 	return self
 end
 
-local Class = {}
-Class.__index = Class
+local RoClass = {}
+RoClass.__index = RoClass
 
-function Class.new(internal)
+function RoClass.new(internal)
 	internal._classBehavior = classBehavior.new(internal._classBehavior)
 	
 	local self = newproxy(true)
@@ -131,12 +135,19 @@ function Class.new(internal)
 				return external
 			end
 		else
-			local publicObject, err = pcall(function()
-				return external[index]
+			local publicObject
+			local success, err = pcall(function()
+				publicObject = external[index]
 			end)
 			
+			if internal._classBehavior.inheritClass then
+				success, err = pcall(function()
+					publicObject = internal._classBehavior.inheritClass[index]
+				end)
+			end
+			
 			if not publicObject then
-				error("[ROCLASS ERROR]" .. index .. " does not exist")
+				error("[ROCLASS ERROR]" .. index .. " does not exist" .. " in class " .. internal._classBehavior.className)
 			end
 			
 			if err then
@@ -158,9 +169,9 @@ function Class.new(internal)
 		end
 	end	
 	
-	setmetatable(proxyMeta, Class)
+	setmetatable(proxyMeta, RoClass)
 	
 	return self
 end
 
-return Class
+return RoClass

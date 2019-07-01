@@ -6,6 +6,6 @@ Description: A module used to create classes/objects
 Head onto the wiki of this project!
 [someRandomLink]
 
-#Todo
+# Todo
 1. Inheritance
 ...

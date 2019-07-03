@@ -34,26 +34,7 @@ function classBehavior.new(overrideSelf)
 					
 			-- A really useful usecase for beforeSet could
 			-- be using server-sanity checks in this function
-						
-			--For Example:
-			-- Client: 
-				-- requestSetCoins:InvokeServer(100)
-						
-			-- Server
-					--{
-						--beforeSet = function(property, oldValue, newValue)
-							-- did you touch coins?
-							--hasTouchedCoins(player, oldValue, newValue)
-						--end
-					--}
-						
-					--requestSetCoins.OnServerEvent = function(player, newCoins)
-						-- before we set the coins we
-						-- will need to call beforeSet,
-						-- which will validate our changes
-							
-						--playerStats.setCoins(newCoins)
-					--end					
+										
 			return true
 		end
 	end
@@ -83,13 +64,43 @@ local RoClass = {}
 RoClass.__index = RoClass
 
 function RoClass.new(internal)
-	internal._classBehavior = classBehavior.new(internal._classBehavior)
-	
-	local self = newproxy(true)
+	internal._classBehavior = classBehavior.new(internal._classBehavior or {})
+		
 	local external = {}
 	
-	local proxyMeta = getmetatable(self)
-	proxyMeta.__index = function(self, index)
+	local metatable = {}	
+	metatable.__index = function(self, index)
+		local publicValue
+		local success, err = pcall(function()
+			publicValue = external[index]
+		end)
+		
+		if internal._classBehavior.inheritClass then
+			success, err = pcall(function()
+				publicValue = internal._classBehavior.inheritClass[index]
+			end)
+		end
+		
+		local className = internal._classBehavior.className
+		if className == "" then
+			className = "a class"
+		end
+		
+		if not success then
+			error("[ROCLASS ERROR] Cannot access " .. index .. " from " .. className)
+		end
+	end
+	
+	metatable.__newindex = function(self, key, value)
+		-- We need to use rawset since 
+		-- __newindex will fire infinetly without
+		-- it
+		
+		rawset(external, key, value)
+		return {}
+	end
+	
+	for index, value in pairs(internal) do
 		local function get(property)
 			return internal[property]
 		end
@@ -98,80 +109,50 @@ function RoClass.new(internal)
 			internal[property] = newValue
 		end
 		
-		local first = index:sub(1, 3):lower()
-		if first == "get" then
-			return function()
+		-- We need to make sure we are
+		-- not getting or setting _classBehavior
+		
+		if index ~= "_classBehavior" then
+			external["get" .. index] = function()
 				local shouldPass = internal._classBehavior.beforeGet(index:sub(4, #index))
 				if not shouldPass then
 					return
 				end	
 				
-				return get(index:sub(4, #index))
+				return get(index)
 			end
-		elseif first == "set" then
-			return function(newValue)
+			
+			external["set" .. index] = function(newValue)				
 				if internal._classBehavior.strictValidation then
-					warn("[ROCLASS DEPRECATION] strictValidation classBehavior may be superseded by roblox's future typechecking system")
+					warn("[ROCLASS DEPRECATION] strictValidation classBehavior may be superseded by roblox's future typechecking system or beforeSet")
 					
-					if typeof(newValue) ~= typeof(get(index:sub(4, #index))) then
+					if typeof(newValue) ~= typeof(get(index)) then
 						error("Cannot set value since the type you are setting to is not the same type as the original value")
 					end
 				end
 				
-				local shouldPass = internal._classBehavior.beforeSet(newValue)
+				local shouldPass = internal._classBehavior.beforeSet(index, get(index), newValue)
 				if not shouldPass then
 					return
 				end
 				
-				set(index:sub(4, #index), newValue)
+				set(index, newValue)
 			end
-		elseif first == "new" then
-			return function(...)		
-				internal._classBehavior.init(internal)
-				internal._classBehavior.new(internal, ...)
-			
-				setmetatable(external, proxyMeta)
+		end
 		
-				return external
-			end
-		else
-			local publicObject
-			local success, err = pcall(function()
-				publicObject = external[index]
-			end)
+		function external.new(...)					
+			internal._classBehavior.init(internal)
+			internal._classBehavior.new(internal, ...)
 			
-			if internal._classBehavior.inheritClass then
-				success, err = pcall(function()
-					publicObject = internal._classBehavior.inheritClass[index]
-				end)
-			end
-			
-			if not publicObject then
-				error("[ROCLASS ERROR]" .. index .. " does not exist" .. " in class " .. internal._classBehavior.className)
-			end
-			
-			if err then
-				error("[ROCLASS ERROR] Cannot access " .. index .. ", a private value of a class")
-			end
-			
-			return publicObject
+			setmetatable(external, metatable)
+		
+			return external
 		end
 	end
 	
-	proxyMeta.__newindex = function(self, key, value)
-		external[key] = value
-		return {}
-	end
+	setmetatable(external, metatable)
 	
-	if internal.init then
-		if typeof(internal.init) == "function" then
-			warn("[ROCLASS DEPRECATION] having init outside of _classBehavior has been deprecated")
-		end
-	end	
-	
-	setmetatable(proxyMeta, RoClass)
-	
-	return self
+	return external
 end
 
 return RoClass

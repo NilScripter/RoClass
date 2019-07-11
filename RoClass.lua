@@ -37,7 +37,7 @@ function RoClass.new(internal)
 		end
 					
 		if not value and shouldError then
-			error("[ROCLASS ERROR] Cannot lock property from " .. cachedInternal._classBehavior.className)
+			error("[ROCLASS ERROR] Cannot lock property")
 		end
 						
 		return value
@@ -77,7 +77,6 @@ function RoClass.new(internal)
 					
 				self[RoClass.Setter .. index] = function(newValue)				
 					if settersBlackList[index] then
-						print(index, ":", "setters blacklist!")
 						return nil
 					end
 					
@@ -136,7 +135,7 @@ function RoClass.new(internal)
 			cachedInternal._classBehavior.new(cachedInternal, ...)	
 		end
 					
-		setupGettersSetters(mainClass, cachedInternal)
+		setupGettersSetters(self, cachedInternal)
 		
 		setmetatable(self, mainClass)
 		return self

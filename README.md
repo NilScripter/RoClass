@@ -8,6 +8,7 @@ RoClass is a module used to create classes/objects.
 * Public & Private Values
 * Inheritance
 * Modifiable Behaviors
+* Signals
 
 # Model
 https://web.roblox.com/catalog/3384263863

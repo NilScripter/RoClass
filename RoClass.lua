@@ -37,7 +37,7 @@ function RoClass.new(internal)
 		end
 					
 		if not value and shouldError then
-			error("[ROCLASS ERROR] Cannot lock property")
+			error("[ROCLASS ERROR] Cannot access property")
 		end
 						
 		return value

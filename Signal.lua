@@ -35,11 +35,14 @@ function Signal:Connect(Function)
 	local newIndex = #self + 1
 	self[newIndex] = Function
 	
+	local function disconnect()
+		self[newIndex] = nil
+		Function = nil
+	end
+	
 	return {
-		Disconnect = function(_)
-			self[newIndex]	= nil
-			Function = nil
-		end
+		Disconnect = disconnect;
+		disconnect = disconnect;
 	}
 end
 
@@ -61,6 +64,10 @@ end
 
 function Signal:destroy()
    self:Destroy()
+end
+
+function Signal:fire(...)
+	self:Fire(...)
 end
 
 return Signal

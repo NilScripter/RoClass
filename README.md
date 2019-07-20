@@ -16,6 +16,7 @@ https://web.roblox.com/catalog/3384263863
 
 If you want to test out new features:
 https://web.roblox.com/library/3445547281/RoClass-Beta
+*(Use RoClass[Beta] at your own risk. Changes could be made without notice.)*
 
 # Documentation
 Head onto the wiki of this project!

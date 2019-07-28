@@ -1,5 +1,5 @@
 # RoClass
-*NOTE:* **(This is meant to be used in Roblox, however, there may be some use cases outside of Roblox)**
+*NOTE:* **This is meant to be used in Roblox, however, there may be some use cases outside of Roblox**
 
 *NOTE:* **This uses the MIT Liscence**
 

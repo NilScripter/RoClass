@@ -1,5 +1,8 @@
 -- A class that acts like bindable events using coroutines.
--- This code was created by somebody else, however I changed it.
+-- This code uses the normal way of creating Connections with coroutines.
+-- You are able to use the 'deprecated' functions' naming if you don't like PascalCase
+
+-- A class that acts like bindable events using coroutines.
 
 -- One example, the Disconnect method doesn't iterate through the whole class, but is what is returned by the Connect method, like it
 -- has always been with events.
@@ -10,7 +13,7 @@ local Signal = {}
 Signal.__index = Signal
 
 function Signal.new() 
-	return setmetatable({}, Signal) 
+	return setmetatable({}, Signal)
 end
 
 function Signal:Fire(...)
@@ -20,30 +23,45 @@ function Signal:Fire(...)
 end
 
 function Signal:Wait()
-	local Thread = coroutine.running()
+	local thread = coroutine.running()
+	local connection
 
-	local function Yield(...)
-		self:Disconnect(Yield)
-		coroutine.resume(Thread, ...)
+	local function yield(...)
+		connection:Disconnect(yield)
+		coroutine.resume(thread, ...)
+		return ...
 	end
-
-	self[#self + 1] = Yield
+	
+	connection = self:Connect(yield)
 	return coroutine.yield()
 end
 
-function Signal:Connect(Function)
+function Signal:Connect(func)
 	local newIndex = #self + 1
-	self[newIndex] = Function
+	self[newIndex] = func
 	
+	local returnTable
 	local function disconnect()
+		returnTable.Connected = false
+		returnTable.connected = false
+		
 		self[newIndex] = nil
-		Function = nil
+		func = nil
+		returnTable.disconnect = nil
+		returnTable.Disconnect = nil
+		disconnect = nil
+		returnTable = nil
 	end
 	
-	return {
+	returnTable = {
+		Connected = false;
+		connected = false;
+		
 		Disconnect = disconnect;
 		disconnect = disconnect;
 	}
+	
+	return returnTable
 end
 
 function Signal:Destroy()
@@ -55,11 +73,11 @@ function Signal:Destroy()
 end
 
 function Signal:wait()
-   self:Wait()
+   return self:Wait()
 end
 
-function Signal:connect(Function)
-   self:Connect(Function)
+function Signal:connect(func)
+   return self:Connect(func)
 end
 
 function Signal:destroy()

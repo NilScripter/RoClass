@@ -1,5 +1,6 @@
 # RoClass
 *NOTE:* **(This is meant to be used in Roblox, however, there may be some use cases outside of Roblox)**
+*NOTE:* **This uses the MIT Liscence**
 
 ## Uses
 Obviously, RoClass is used to create classes.  However, it is quite easy to do so with metatables.  These are some things
